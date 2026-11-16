@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-REQUEST_COUNT = 10
-
 
 class ProgressObserver(Protocol):
     def request_started(self, number: int) -> None: ...
@@ -39,15 +37,19 @@ def run_benchmark(
     url: str,
     downloader: Downloader,
     observer: ProgressObserver,
+    request_count: int,
     clock: Callable[[], float] = perf_counter,
 ) -> BenchmarkResult:
+    if request_count < 1:
+        raise ValueError("Request count must be positive")
+
     total_bytes = 0
     total_seconds = 0.0
 
-    for number in range(1, REQUEST_COUNT + 1):
+    for number in range(1, request_count + 1):
         observer.request_started(number)
         started = clock()
         total_bytes += downloader.download(url, observer)
         total_seconds += clock() - started
 
-    return BenchmarkResult(REQUEST_COUNT, total_bytes, total_seconds)
+    return BenchmarkResult(request_count, total_bytes, total_seconds)

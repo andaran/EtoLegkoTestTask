@@ -52,7 +52,7 @@ class BenchmarkTests(unittest.TestCase):
         observer = RecordingObserver()
         clock = CallableClock(iter(float(value) for value in range(20)))
 
-        result = run_benchmark("https://example.com", downloader, observer, clock)
+        result = run_benchmark("https://example.com", downloader, observer, 10, clock)
 
         self.assertEqual(downloader.urls, ["https://example.com"] * 10)
         self.assertEqual(observer.requests, list(range(1, 11)))
@@ -68,7 +68,24 @@ class BenchmarkTests(unittest.TestCase):
         clock = CallableClock(iter([0.0, 1.0, 2.0, 3.0, 4.0]))
 
         with self.assertRaisesRegex(OSError, "download failed"):
-            run_benchmark("https://example.com", downloader, observer, clock)
+            run_benchmark("https://example.com", downloader, observer, 10, clock)
 
         self.assertEqual(len(downloader.urls), 3)
         self.assertEqual(observer.requests, [1, 2, 3])
+
+    def test_configurable_request_count(self) -> None:
+        downloader = FakeDownloader()
+        observer = RecordingObserver()
+        clock = CallableClock(iter([0.0, 1.0, 2.0, 3.0]))
+
+        result = run_benchmark("https://example.com", downloader, observer, 2, clock)
+
+        self.assertEqual(result.request_count, 2)
+        self.assertEqual(result.total_bytes, 200)
+        self.assertEqual(observer.requests, [1, 2])
+
+    def test_rejects_zero_requests(self) -> None:
+        with self.assertRaises(ValueError):
+            run_benchmark(
+                "https://example.com", FakeDownloader(), RecordingObserver(), 0
+            )

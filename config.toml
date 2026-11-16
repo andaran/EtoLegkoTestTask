@@ -1,0 +1,3 @@
+# Unsplash image in PNG format, approximately 15.9 MB per request.
+url = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?fm=png"
+request_count = 10
